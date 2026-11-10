@@ -2337,6 +2337,11 @@ function doSearch(event) {
   if (event) event.preventDefault();
   const query = document.getElementById('search-input').value.trim();
   if (!query) { navigate('/'); return; }
+  // GA4 추천 이벤트 search — 검색창에서 검색을 실행했을 때
+  gaEvent('search', {
+    search_term:         query,
+    search_result_count: searchProducts(query).length,
+  });
   pendingScrollTo = 'section-all-products';
   navigate('/search/' + encodeURIComponent(query));
 }
