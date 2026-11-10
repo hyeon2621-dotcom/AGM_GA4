@@ -1328,8 +1328,10 @@ window.addEventListener('hashchange', handleRoute);
 // PAGE NAVIGATION (뷰 전환은 라우터가 호출)
 // ────────────────────────────────
 function showPage(name) {
+  const wasHome = document.getElementById('page-home').classList.contains('is-active');
   document.querySelectorAll('.page-view').forEach(v => v.classList.remove('is-active'));
   document.getElementById('page-' + name).classList.add('is-active');
+  if (name === 'home' && !wasHome) { gaBannerSeen.clear(); setTimeout(trackBannerView, 0); }  // 홈 재진입 = 새 노출
 }
 
 function goHome()      { navigate('/'); }
@@ -1406,6 +1408,37 @@ function toggleWishlistFromDetail(productId, event) {
     currency:      'KRW',
   });
 }
+
+// banner_view / banner_click — 상단 히어로 배너 (5장 슬라이드)
+// banner_view: 홈 화면이 보이고 배너가 화면에 50% 이상 보일 때, 슬라이드별로 홈 진입 1회당 1번
+const gaBannerSeen = new Set();
+let gaHeroVisible = false;
+
+function bannerParams(idx) {
+  const slide = document.querySelectorAll('.banner-slide')[idx];
+  return { banner_name: slide.dataset.bannerTitle, banner_position: idx + 1 };
+}
+
+function trackBannerView() {
+  if (!gaHeroVisible || document.visibilityState !== 'visible') return;
+  if (!document.getElementById('page-home').classList.contains('is-active')) return;
+  if (gaBannerSeen.has(bannerIdx)) return;
+  gaBannerSeen.add(bannerIdx);
+  gaEvent('banner_view', bannerParams(bannerIdx));
+}
+
+if ('IntersectionObserver' in window) {
+  new IntersectionObserver(([en]) => {
+    gaHeroVisible = en.isIntersecting;
+    trackBannerView();
+  }, { threshold: 0.5 }).observe(document.getElementById('hero'));
+}
+document.addEventListener('visibilitychange', trackBannerView);
+
+// banner_click: 배너의 "~ 보러가기" 버튼 클릭
+document.querySelectorAll('.banner-cta').forEach((btn, idx) => {
+  btn.addEventListener('click', () => gaEvent('banner_click', { ...bannerParams(idx), click_text: btn.textContent.trim() }), true);
+});
 
 // ────────────────────────────────
 // GA4 이벤트: go_to_wishlist (찜 목록 이동 클릭)
@@ -2343,6 +2376,7 @@ function goToBanner(idx) {
   document.getElementById('banner-track').style.transform = `translateX(-${bannerIdx * 100}%)`;
   document.querySelectorAll('.banner-dot').forEach((d, i) => d.classList.toggle('is-active', i === bannerIdx));
   resetBannerTimer();
+  trackBannerView();
 }
 
 function moveBanner(dir) {
