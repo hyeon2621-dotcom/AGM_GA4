@@ -463,7 +463,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <button id="btn-logout" onclick="doLogout()">로그아웃</button>
         </div>
       </div>
-      <button class="btn-header" id="btn-wishlist-header" onclick="openWishlist()">
+      <button class="btn-header" id="btn-wishlist-header" onclick="trackGoToWishlist('header'); openWishlist()">
         ♡ <span class="cart-item-count" id="wishlist-count">0</span>
       </button>
       <button class="btn-cart" id="btn-open-cart" onclick="openCart()">
@@ -1343,6 +1343,23 @@ function showPage(name) {
 function goHome()      { navigate('/'); }
 function openCart()    { navigate('/cart'); }
 function openWishlist(){ navigate('/wishlist'); }
+
+// ────────────────────────────────
+// GA4 이벤트: go_to_wishlist (찜 목록 이동 클릭)
+// ────────────────────────────────
+// 라우터의 페이지 종류 → 이벤트 page_type 값 매핑
+const GA_PAGE_TYPE = { product: 'product_detail' };
+
+function trackGoToWishlist(clickLocation) {
+  if (typeof gtag !== 'function') return;
+  const routeType = document.body.getAttribute('data-page-type') || 'home';  // 이동 전 화면 기준
+  gtag('event', 'go_to_wishlist', {
+    click_location: clickLocation,
+    page_type:      GA_PAGE_TYPE[routeType] || routeType,
+    wishlist_count: wishlist.length,
+    login_status:   currentUser ? 'logged_in' : 'logged_out',
+  });
+}
 
 // ────────────────────────────────
 // PRODUCT GRID
