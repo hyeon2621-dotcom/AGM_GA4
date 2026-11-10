@@ -1392,6 +1392,21 @@ document.addEventListener('click', e => {
   gaEvent('item_click', { item_name: card.dataset.productName, section: card.dataset.gaSection });
 }, true);
 
+// add_to_wishlist — 상품 상세 ♡ 버튼으로 찜에 "추가"될 때만 (해제 시 미발송)
+function toggleWishlistFromDetail(productId, event) {
+  const willAdd = !isWished(productId);
+  toggleWishlist(productId, event);
+  if (!willAdd) return;
+  const product = PRODUCTS.find(p => p.id === productId);
+  if (!product) return;
+  gaEvent('add_to_wishlist', {
+    item_name:     product.name,
+    item_category: product.category,
+    value:         product.price,
+    currency:      'KRW',
+  });
+}
+
 // ────────────────────────────────
 // GA4 이벤트: go_to_wishlist (찜 목록 이동 클릭)
 // ────────────────────────────────
@@ -1775,7 +1790,7 @@ function renderProductDetail(product) {
         </button>
         <div class="detail-action-row">
           <button class="btn-buy-now" id="btn-buy-now" data-product-id="${product.id}" data-product-name="${product.name}" data-product-price="${product.variants[0].price}" data-product-variant="${product.variants[0].id}" onclick="buyNow('${product.id}')">⚡ 바로 구매하기</button>
-          <button class="btn-icon-action${wished ? ' is-active' : ''}" id="btn-wishlist-detail" data-product-id="${product.id}" data-product-name="${product.name}" data-wishlist-state="${wished ? 'on' : 'off'}" onclick="toggleWishlist('${product.id}', event)" aria-label="찜하기">${wished ? '♥' : '♡'}</button>
+          <button class="btn-icon-action${wished ? ' is-active' : ''}" id="btn-wishlist-detail" data-product-id="${product.id}" data-product-name="${product.name}" data-wishlist-state="${wished ? 'on' : 'off'}" onclick="toggleWishlistFromDetail('${product.id}', event)" aria-label="찜하기">${wished ? '♥' : '♡'}</button>
         </div>
         <div class="share-row">
           <button class="btn-share" id="btn-share-kakao" data-share-channel="kakao" data-product-id="${product.id}" onclick="shareProduct('kakao','${product.id}')">💬 카카오톡 공유</button>
